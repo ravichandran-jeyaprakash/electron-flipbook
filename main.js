@@ -13,6 +13,8 @@ const https = require('https');
 const s3ZipUrl = 'https://internal-training-new.s3.us-west-2.amazonaws.com/Code+Pixel+Book_2_Flipbook.zip';
 
 const zipFile = path.join(__dirname, 'data/Code Pixel Book_2_Flipbook.zip');
+const extractZipTo = path.join(app.getPath('userData'), 'flipbook_cache/original/');
+
 const destination = path.join(__dirname, 'data');
 const extractTo = path.join(app.getPath('userData'), 'flipbook_cache');
 const decryptedTemp = path.join(os.tmpdir(), 'flipbook_decrypted');
@@ -27,8 +29,8 @@ async function downloadZip(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ZIP: ${res.statusText}`);
   // Use streamPipeline to pipe the response to the file
-  await streamPipeline(res.body, fs.createWriteStream(zipFile));
-  console.log('ZIP downloaded to:', zipFile);
+  await streamPipeline(res.body, fs.createWriteStream(extractZipTo));
+  console.log('ZIP downloaded to:', extractZipTo);
 }
 
 // Encrypt a file and replace it with .enc version
@@ -110,12 +112,20 @@ async function unzipAndEncrypt() {
   console.log(storyPath);
   if (!fs.existsSync(storyPath)) {
     console.log('Extracting Flipbook...');
-    await extract(zipFile, { dir: extractTo });
+    await extract(extractZipTo, { dir: extractTo });
+
+    // Delete the zip file after extraction
+    if (fs.existsSync(extractZipTo)) {
+      fs.rmSync(extractZipTo, { recursive: true, force: true });
+      console.log('Deleted extracted folder after extraction:', extractZipTo);
+    }
     console.log('Encrypting .js files...');
     await encryptJSFiles(path.join(extractTo, 'Code Pixel Book_2_Flipbook'));
   } else {
     console.log('Flipbook already extracted.');
   }
+  
+
 }
 
 // Create temp decrypted flipbook
@@ -188,7 +198,8 @@ ipcMain.on('open-flipbook', async () => {
 
 ipcMain.on('open-flipbook', async () => {
   // Only download if the zip file does not exist
-  if (!fs.existsSync(zipFile)) {
+  //  console.log(extractTo);
+  if (!fs.existsSync(path.join(extractTo, 'Code Pixel Book_2_Flipbook'))) {
     await downloadZip(s3ZipUrl);
   } else {
     console.log('ZIP file already exists, skipping download.');
