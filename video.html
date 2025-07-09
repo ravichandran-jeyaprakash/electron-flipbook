@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chapter 1 Video</title>
+  <style>
+    body { background: #222; color: #fff; margin: 0; font-family: Arial, sans-serif; }
+    .top-bar { display: flex; align-items: center; padding: 18px 24px 10px 24px; background: #181c20; }
+    .back-btn { margin-right: 24px; padding: 10px 22px; font-size: 1.1em; border-radius: 5px; border: none; background: #0078d7; color: #fff; cursor: pointer; transition: background 0.2s; }
+    .back-btn:hover { background: #005fa3; }
+    .cache-info { background: #2a2e33; color: #e0e0e0; padding: 12px 22px; border-radius: 6px; font-size: 1em; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+    @media (max-width: 700px) {
+      .top-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .cache-info { margin-top: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <button class="back-btn" onclick="window.electronAPI.goToLauncher()">Back to Home</button>
+    <div class="cache-info" id="video-cache-info">
+      Loading cache info...
+    </div>
+  </div>
+  <video id="chapter1video"  
+  autoplay
+  muted
+  id="chapter1video" controls style="display:block; margin: 30px auto 0 auto; max-width:90vw; max-height:60vh; background:#000; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.15);">
+    <source id="videoSource" src="" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <script>
+
+   window.electronAPI.onSetVideoPath(async (event, encPath) => {
+     // document.getElementById('videoSource').src = videoPath;
+     // document.getElementById('chapter1video').load();
+     if (window.electronAPI.decryptVideo) {
+        const decryptedPath = await window.electronAPI.decryptVideo(encPath);
+        document.getElementById('videoSource').src = `file://${decryptedPath.replace(/\\/g, '/')}`;
+        document.getElementById('chapter1video').load();     
+     }
+
+       // Show cache info (assumes window.getCacheInfo is exposed)
+       if (window.getCacheInfo) {
+        const cache = await window.getCacheInfo('current_video');
+        if (cache) {
+          document.getElementById('video-cache-info').innerHTML =
+            `<b>Video:</b> ${cache.videoFileName || '-'}<br>
+             <b>Cached:</b> ${new Date(cache.cacheTime).toLocaleString()}<br>
+             <b>Last Accessed:</b> ${new Date(cache.lastAccessed).toLocaleString()}`;
+        } else {
+          document.getElementById('video-cache-info').innerText = 'No cache info found.';
+        }
+      }
+      
+    });
+  </script>
+  <script src="renderer.js"></script>
+</body>
+</html>

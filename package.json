@@ -10,9 +10,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  
   "dependencies": {
     "electron": "^37.2.0",
-    "extract-zip": "^2.0.1"
+    "extract-zip": "^2.0.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "electron-packager": "^17.1.2"
   }
 }
