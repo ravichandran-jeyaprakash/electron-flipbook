@@ -1,12 +1,17 @@
 window.electronAPI.onFlipbookOpened(async (event, flipbookFileName) => {
+    // Store cache info in IndexedDB when the flipbook is opened
     console.log('Cache info stored for flipbook:', flipbookFileName);
     await storeCacheInfo(flipbookFileName);
     console.log('Cache info stored for flipbook:', flipbookFileName);
   });
 
-
 // IndexedDB logic in renderer
 console.log('Loading renderer.js...');
+
+/**
+ * Opens (or creates) the IndexedDB database for flipbook/video cache info.
+ * @returns {Promise<IDBDatabase>} The opened database instance.
+ */
 function openDB() {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('FlipbookCacheDB', 1);
@@ -21,7 +26,11 @@ function openDB() {
     });
   }
 
-  async function clearCacheFromDB() {
+/**
+ * Clears all cache info from the IndexedDB database.
+ * @returns {Promise<void>}
+ */
+async function clearCacheFromDB() {
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction('flipbookCache', 'readwrite');
@@ -32,7 +41,12 @@ function openDB() {
     });
   }
   
-  async function getCacheInfo(id) {
+/**
+ * Retrieves cache info for a given id from IndexedDB.
+ * @param {string} id - The cache entry id ('current_flipbook' or 'current_video').
+ * @returns {Promise<Object|null>} The cache info object or null if not found.
+ */
+async function getCacheInfo(id) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction('flipbookCache', 'readonly');
@@ -43,7 +57,11 @@ function openDB() {
     });
   }
   
-  async function clearCache() {
+/**
+ * Clears all cache info from IndexedDB (alias for clearCacheFromDB).
+ * @returns {Promise<void>}
+ */
+async function clearCache() {
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction('flipbookCache', 'readwrite');
@@ -54,6 +72,12 @@ function openDB() {
     });
   }
 
+/**
+ * Stores video cache info in IndexedDB under 'current_video'.
+ * @param {string} videoFileName - The video file name.
+ * @param {string} [cacheTime] - The cache time (ISO string, defaults to now).
+ * @returns {Promise<Object>} The stored cache info object.
+ */
 async function storeVideoCacheInfo(videoFileName, cacheTime = new Date().toISOString()) {
     const db = await openDB();
     console.log('store cache inside');
@@ -72,9 +96,16 @@ async function storeVideoCacheInfo(videoFileName, cacheTime = new Date().toISOSt
     });
 }
 
+// Expose cache info functions to window for use in other scripts
 window.storeVideoCacheInfo = storeVideoCacheInfo;
 window.getCacheInfo = getCacheInfo;
 
+/**
+ * Stores flipbook cache info in IndexedDB under 'current_flipbook'.
+ * @param {string} zipFileName - The flipbook zip file name.
+ * @param {string} [cacheTime] - The cache time (ISO string, defaults to now).
+ * @returns {Promise<Object>} The stored cache info object.
+ */
 async function storeCacheInfo(zipFileName, cacheTime = new Date().toISOString()) {
   const db = await openDB();
   console.log('storeCacheInfo called with', zipFileName);
@@ -112,6 +143,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// Attach clear cache button event handler if present
+/**
+ * Handles the clear cache button click event.
+ * Prompts the user for confirmation, clears the cache, and updates the UI.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     // document.getElementById('clear-cache-btn').addEventListener('click', handleClearCache);
     const clearCacheBtn = document.getElementById('clear-cache-btn');
