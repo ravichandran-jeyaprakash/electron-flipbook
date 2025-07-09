@@ -55,16 +55,43 @@ electron-flipbook/
      ```
    - File names are extracted automatically from the URLs.
 
-### Running the App
+## Running the App Locally
 
-```sh
-npm start
-```
+1. **Start the Electron app**
 
-This will:
+   ```sh
+   npm start
+   ```
 
-- Download, extract, and encrypt the flipbook and video from S3 (if not already cached)
-- Open a window and display the home page with options for offline/online viewing
+   This will:
+
+   - Download, extract, and encrypt the flipbook and video from S3 (if not already cached)
+   - Open a window and display the home page with options for offline/online viewing
+
+## Building and Deploying for Windows
+
+1. **Install Electron Packager (if not already installed)**
+
+   ```sh
+   npm install --save-dev electron-packager
+   ```
+
+2. **Build the Windows package**
+
+   ```sh
+   npx electron-packager . electron-flipbook --platform=win32 --arch=x64 --out=dist --overwrite
+   ```
+
+   - This will create a `dist/electron-flipbook-win32-x64/` directory with the packaged app.
+
+3. **Run the packaged app**
+
+   - Navigate to the `dist/electron-flipbook-win32-x64/` directory.
+   - Double-click `electron-flipbook.exe` to launch the app.
+
+4. **Distribute/Deploy**
+   - You can zip the contents of `dist/electron-flipbook-win32-x64/` and share it with users.
+   - No installation is required; users just need to extract and run `electron-flipbook.exe`.
 
 ## Security & Caching
 
