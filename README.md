@@ -54,14 +54,14 @@ electron-flipbook/
 
 1. **Start the Electron app**
 
-   ```sh
-   npm start
-   ```
+```sh
+npm start
+```
 
-   This will:
+This will:
 
-   - Download, extract, and encrypt the flipbook and video from S3 (if not already cached)
-   - Open a window and display the home page with options for offline/online viewing
+- Download, extract, and encrypt the flipbook and video from S3 (if not already cached)
+- Open a window and display the home page with options for offline/online viewing
 
 ## Building and Deploying for Windows
 

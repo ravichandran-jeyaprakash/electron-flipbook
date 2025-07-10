@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Flipbook Launcher</title>
   <style>
     body { 
@@ -105,6 +106,12 @@
     });
   </script>
   <script src="renderer.js"></script>
- 
+  <div id="progress-container" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(255,255,255,0.85);z-index:10000;align-items:center;justify-content:center;flex-direction:column;">
+    <div style="font-size:1.5em;margin-bottom:16px;" id="progress-label">Downloading...</div>
+    <div style="width:320px;height:24px;background:#eee;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+      <div id="progress-bar" style="height:100%;width:0%;background:#0078d7;transition:width 0.2s;"></div>
+    </div>
+    <div id="progress-percent" style="margin-top:12px;font-size:1.2em;color:#0078d7;">0%</div>
+  </div>
 </body>
 </html> 

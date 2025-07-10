@@ -33,7 +33,7 @@ async function createWindow() {
     height: 800,
     webPreferences: {
       contextIsolation: true,
-      devTools: false,
+      devTools: true,
       nodeIntegration: false,
       preload: path.join(__dirname, 'preload.js'),
     },
@@ -49,7 +49,7 @@ app.whenReady().then(createWindow).catch(console.error);
 
 // Clean up decrypted temp files and quit app when all windows are closed
 app.on('window-all-closed', () => {
-  deleteDecryptedFiles();
+  // deleteDecryptedFiles();
   if (process.platform !== 'darwin') app.quit();
 });
 
@@ -81,16 +81,27 @@ function deleteDecryptedFiles() {
 ipcMain.on('open-flipbook', async () => {
   const flipbookFolder = path.join(extractTo, getFlipbookFolderName(zipFileName));
   if (!fs.existsSync(flipbookFolder)) {
+    console.log("downloading the zip");
     const zipPath = path.join(extractZipTo, zipFileName);
     if (!fs.existsSync(zipPath)) {
-      await downloadFile(s3ZipUrl, zipPath);
+      if (!fs.existsSync(extractZipTo)) {
+        fs.mkdirSync(extractZipTo, { recursive: true });
+      }
+      await downloadFile(s3ZipUrl, zipPath, (percent) => {
+      // await downloadFile(s3ZipUrl, zipPath);
+      mainWindow.webContents.send('download-progress', { type: 'flipbook', percent });
+     });
+
     }
+    console.log("Extracting the zip");
     await unzipAndEncryptFlipbook(zipPath, extractTo, zipFileName);
     // Clean up zip file after extraction
     if (fs.existsSync(zipPath)) {
       fs.unlinkSync(zipPath);
-      console.log('Deleted zip file after extraction:', zipPath);
+      console.log('Deleted zip file after extraction:');
     }
+  }else{
+    console.log("flip book already extracted offline");
   }
   prepareDecryptedFlipbookCopy(extractTo, zipFileName, decryptedTemp);
   mainWindow.webContents.send('flipbook-opened', zipFileName);
@@ -124,9 +135,15 @@ ipcMain.on('download-video', async () => {
   if (!fs.existsSync(cacheVideoDir)) {
     fs.mkdirSync(cacheVideoDir, { recursive: true });
   }
-  await downloadAndEncryptVideo(videoS3Url, cacheVideoPath, tempVideoPath);
+
+  await downloadAndEncryptVideo(videoS3Url, cacheVideoPath, tempVideoPath, (percent) => {
+    mainWindow.webContents.send('download-progress', { type: 'video', percent });
+  });
+
+
   mainWindow.loadFile(path.join(__dirname, 'video.html')).then(() => {
     mainWindow.webContents.send('set-video-path', cacheVideoPath);
+    mainWindow.webContents.send('video-opened', videoFileName);
   });
 });
 

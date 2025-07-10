@@ -12,11 +12,14 @@ const { downloadFile } = require('./downloadUtils');
  * @param {string} tempVideoPath - Temporary path for the unencrypted video during processing.
  * @returns {Promise<void>} Resolves when the video is downloaded and encrypted.
  */
-async function downloadAndEncryptVideo(videoUrl, cacheVideoPath, tempVideoPath) {
+async function downloadAndEncryptVideo(videoUrl, cacheVideoPath, tempVideoPath,onProgress) {
   if (!fs.existsSync(cacheVideoPath)) {
-    await downloadFile(videoUrl, tempVideoPath);
+    console.log('Downloading the video');
+    await downloadFile(videoUrl, tempVideoPath,onProgress);
     await encryptFile(tempVideoPath, cacheVideoPath);
     fs.unlinkSync(tempVideoPath);
+  }else{
+    console.log('Video already downloaded offline');
   }
 }
 

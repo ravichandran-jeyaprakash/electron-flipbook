@@ -37,7 +37,8 @@
      if (window.electronAPI.decryptVideo) {
         const decryptedPath = await window.electronAPI.decryptVideo(encPath);
         document.getElementById('videoSource').src = `file://${decryptedPath.replace(/\\/g, '/')}`;
-        document.getElementById('chapter1video').load();     
+        document.getElementById('chapter1video').load();  
+        storeVideoCacheInfo();   
      }
 
        // Show cache info (assumes window.getCacheInfo is exposed)

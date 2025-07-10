@@ -1,12 +1,18 @@
 window.electronAPI.onFlipbookOpened(async (event, flipbookFileName) => {
     // Store cache info in IndexedDB when the flipbook is opened
-    console.log('Cache info stored for flipbook:', flipbookFileName);
+   //  console.log('Cache info stored for flipbook:', flipbookFileName);
     await storeCacheInfo(flipbookFileName);
-    console.log('Cache info stored for flipbook:', flipbookFileName);
+     console.log('Cache info stored for flipbook:');
   });
 
+  window.electronAPI.onVideoOpened(async (event, videoFileName) => {
+    // Store cache info in IndexedDB when the flipbook is opened
+    await storeVideoCacheInfo(videoFileName);
+     console.log('Cache info stored for video:');
+  });
+  
+
 // IndexedDB logic in renderer
-console.log('Loading renderer.js...');
 
 /**
  * Opens (or creates) the IndexedDB database for flipbook/video cache info.
@@ -79,8 +85,8 @@ async function clearCache() {
  * @returns {Promise<Object>} The stored cache info object.
  */
 async function storeVideoCacheInfo(videoFileName, cacheTime = new Date().toISOString()) {
-    const db = await openDB();
-    console.log('store cache inside');
+  console.log('cached');  
+  const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction('flipbookCache', 'readwrite');
       const store = tx.objectStore('flipbookCache');
@@ -108,9 +114,6 @@ window.getCacheInfo = getCacheInfo;
  */
 async function storeCacheInfo(zipFileName, cacheTime = new Date().toISOString()) {
   const db = await openDB();
-  console.log('storeCacheInfo called with', zipFileName);
-
-  console.log(zipFileName);
   return new Promise((resolve, reject) => {
     const tx = db.transaction('flipbookCache', 'readwrite');
     const store = tx.objectStore('flipbookCache');
@@ -134,7 +137,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     // await storeCacheInfo('Code Pixel Book_2_Flipbook.zip');
     // cacheInfo = await getCacheInfo('current_flipbook');
   }
-  console.log(cacheInfo);
   if (cacheInfo) {
    // document.getElementById('cache-info').style.display = 'block';
    // document.getElementById('zip-file').textContent = cacheInfo.zipFileName || 'Unknown';
@@ -169,6 +171,33 @@ async function handleClearCache() {
     }
   }
 
+  window.electronAPI.onDownloadProgress((event, { type, percent }) => {
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressLabel = document.getElementById('progress-label');
+  
+    // Show the progress bar
+    progressContainer.style.display = 'flex';
+    progressBar.style.width = percent + '%';
+    progressPercent.textContent = percent + '%';
+  
+    // Set label
+    if (type === 'flipbook') {
+      progressLabel.textContent = 'Downloading Flipbook...';
+    } else if (type === 'video') {
+      progressLabel.textContent = 'Downloading Video...';
+    }
+  
+    // Hide when done
+    if (percent >= 100) {
+      setTimeout(() => {
+        progressContainer.style.display = 'none';
+        progressBar.style.width = '0%';
+        progressPercent.textContent = '0%';
+      }, 800); // short delay for user to see 100%
+    }
+  });
 
 
 
