@@ -4,7 +4,7 @@ This Electron app securely displays a flipbook and video content, with offline c
 
 ## Features
 
-- **Automatic download and extraction** of flipbook ZIP and video from S3 URLs (set in `main.js`)
+- **Automatic download and extraction** of flipbook ZIP and video from S3 URLs (set in `src/js/main.js`)
 - **AES-256-CBC encryption** of all JS files and video before caching; decryption is performed on-the-fly
 - **Offline and online viewing**: View flipbook and video from cache or directly from S3
 - **IndexedDB cache info**: Stores and displays cache info for both flipbook and video in the renderer
@@ -17,18 +17,13 @@ This Electron app securely displays a flipbook and video content, with offline c
 
 ```
 electron-flipbook/
-├── main.js              # Main Electron process: window, IPC, orchestration
-├── fileUtils.js         # File encryption, decryption, and utility functions
-├── downloadUtils.js     # Downloading and unzipping files from S3
-├── flipbookManager.js   # Flipbook-specific extraction, encryption, decryption
-├── videoManager.js      # Video-specific download, encryption, decryption
-├── renderer.js          # Renderer process: IndexedDB cache, UI logic
-├── preload.js           # Secure preload script for IPC
-├── index.html           # Home page (modern card-based UI)
-├── flip.html            # Flipbook viewing page
-├── video.html           # Video viewing page
-├── package.json         # Project metadata and dependencies
-├── README.md            # Project documentation
+├── src/
+│   ├── js/                # All JavaScript source files (main, utils, managers, preload, renderer)
+│   └── html/              # All HTML files (index.html, flip.html, video.html)
+├── dist/                  # Electron build output
+├── distenc/               # Obfuscated JS output (see below)
+├── package.json           # Project metadata and dependencies
+├── README.md              # Project documentation
 └── ...
 ```
 
@@ -48,7 +43,7 @@ electron-flipbook/
    ```
 
 2. **Configure S3 URLs**
-   - Edit the S3 URLs for the flipbook zip and video in `main.js`:
+   - Edit the S3 URLs for the flipbook zip and video in `src/js/main.js`:
      ```js
      const s3ZipUrl = "https://.../your-flipbook.zip";
      const videoS3Url = "https://.../your-video.mp4";
@@ -93,6 +88,30 @@ electron-flipbook/
    - You can zip the contents of `dist/electron-flipbook-win32-x64/` and share it with users.
    - No installation is required; users just need to extract and run `electron-flipbook.exe`.
 
+## JavaScript Code Obfuscation
+
+To further protect your source code, you can obfuscate all JavaScript files before distribution using [javascript-obfuscator](https://github.com/javascript-obfuscator/javascript-obfuscator).
+
+### Install Obfuscator
+
+```sh
+npm install --save-dev javascript-obfuscator
+```
+
+### Obfuscate Source Code
+
+```sh
+npx javascript-obfuscator ./src --output ./distenc --compact true --control-flow-flattening true
+```
+
+- This command will obfuscate all JavaScript files in the `src` directory and output the obfuscated files to the `distenc` directory.
+- The options `--compact true` and `--control-flow-flattening true` increase the difficulty of reverse engineering.
+
+### Usage
+
+- You can use the contents of `distenc` for distribution or further packaging.
+- Make sure to test the obfuscated build to ensure all functionality works as expected.
+
 ## Security & Caching
 
 - **Encryption:** All JS files and video are encrypted with AES-256-CBC before being cached. Decryption is performed on-the-fly for serving to the renderer or for video playback.
@@ -102,9 +121,9 @@ electron-flipbook/
 
 ## Customization
 
-- **Change S3 URLs:** Edit the URLs in `main.js` as described above.
-- **UI/UX:** Modify `index.html`, `flip.html`, `video.html`, and `renderer.js` for custom UI or additional features.
-- **Encryption:** The encryption password and salt are set in `fileUtils.js`.
+- **Change S3 URLs:** Edit the URLs in `src/js/main.js` as described above.
+- **UI/UX:** Modify HTML files in `src/html/` and logic in `src/js/renderer.js` for custom UI or additional features.
+- **Encryption:** The encryption password and salt are set in `src/js/fileUtils.js`.
 
 ## Troubleshooting
 
@@ -120,6 +139,7 @@ electron-flipbook/
 - [electron](https://www.electronjs.org/)
 - [extract-zip](https://www.npmjs.com/package/extract-zip)
 - [node-fetch](https://www.npmjs.com/package/node-fetch)
+- [javascript-obfuscator](https://www.npmjs.com/package/javascript-obfuscator)
 
 ## License
 
