@@ -171,6 +171,10 @@ async function handleClearCache() {
     }
   }
 
+  window.electronAPI.onCacheCleared((event, type) => {
+    alert((type === 'flipbook' ? 'Flipbook' : 'Video') + ' cache cleared!');
+  });
+
   window.electronAPI.onDownloadProgress((event, { type, percent }) => {
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar');

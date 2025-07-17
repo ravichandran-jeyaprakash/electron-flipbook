@@ -10,7 +10,7 @@
     body { 
       font-family: Arial, sans-serif; 
       text-align: center; 
-      margin-top: 50px; 
+      margin-top: 20px; 
       padding: 20px;
     }
     a { 
@@ -38,8 +38,8 @@
       color: #666;
     }
     .clear-cache-btn {
-      background: #dc3545;
-      color: white;
+      background: #efefef;
+      color: #000000;
       border: none;
       padding: 10px 20px;
       border-radius: 5px;
@@ -47,7 +47,7 @@
       margin-top: 10px;
     }
     .clear-cache-btn:hover {
-      background: #c82333;
+      background: #cccccc;
     }
   </style>
   
@@ -59,18 +59,20 @@
       <div class="card">
         <h2>Flipbook</h2>
         <p>Read the interactive flipbook offline.</p>
-        <button id="open-flipbook" class="action-btn">Open Flipbook</button>
+        <button id="open-flipbook" class="action-btn">Play Flipbook</button>
+        <button id="clear-flipbook-cache" class="clear-cache-btn">Clear Cache Dir</button>
       </div>
       <div class="card">
         <h2>Chapter 1 Video</h2>
         <p>Watch the video for Chapter 1 offline.</p>
-        <button id="download-video" class="action-btn">Play Chapter 1 Video</button>
+        <button id="download-video" class="action-btn">Play Video</button>
+        <button id="clear-video-cache" class="clear-cache-btn">Clear Cache Dir</button>
       </div>
     </div>
   </div>
 
   <div id="loader" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(255,255,255,0.8);z-index:9999;align-items:center;justify-content:center;">
-    <div style="font-size:2em;">Loading data...</div>
+    <div style="font-size:2em;">Loading content...</div>
   </div>
   <style>
     body { background: #f7f9fa; }
@@ -104,6 +106,24 @@
         alert('This must be run inside Electron.');
       }
     });
+
+    document.getElementById('clear-flipbook-cache').addEventListener('click', function(e) {
+      e.preventDefault();
+      if (window.electronAPI && window.electronAPI.clearCache) {
+        window.electronAPI.clearCache('flipbook');
+      } else {
+        alert('This must be run inside Electron.');
+      }
+    });
+
+    document.getElementById('clear-video-cache').addEventListener('click', function(e) {
+      e.preventDefault();
+      if (window.electronAPI && window.electronAPI.clearCache) {
+        window.electronAPI.clearCache('video');
+      } else {
+        alert('This must be run inside Electron.');
+      }
+    });
   </script>
   <script src="renderer.js"></script>
   <div id="progress-container" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(255,255,255,0.85);z-index:10000;align-items:center;justify-content:center;flex-direction:column;">
@@ -113,5 +133,6 @@
     </div>
     <div id="progress-percent" style="margin-top:12px;font-size:1.2em;color:#0078d7;">0%</div>
   </div>
+
 </body>
 </html> 

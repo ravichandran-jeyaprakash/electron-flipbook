@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onSetFlipbookPath: (callback) => ipcRenderer.on('set-flipbook-path', callback),
   decryptVideo: (encPath) => ipcRenderer.invoke('decrypt-video', encPath),
   onDownloadProgress: (callback) => ipcRenderer.on('download-progress', callback),
+  clearCache: (type) => ipcRenderer.send('clear-cache', type),
+  onCacheCleared: (callback) => ipcRenderer.on('cache-cleared', callback),
 
 
 }); 

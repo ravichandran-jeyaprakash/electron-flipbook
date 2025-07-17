@@ -17,9 +17,15 @@ const zipFileName = getFileNameFromUrl(s3ZipUrl);
 const videoFileName = getFileNameFromUrl(videoS3Url);
 
 // Define cache and temp directories
+
 const extractZipTo = path.join(app.getPath('userData'), 'flipbook_cache/original/');
 const extractTo = path.join(app.getPath('userData'), 'flipbook_cache');
 const decryptedTemp = path.join(os.tmpdir(), 'flipbook_decrypted');
+
+app.setPath('userData', path.join(app.getPath('appData'), 'flipbook-app'));
+app.commandLine.appendSwitch('disable-gpu');
+app.commandLine.appendSwitch('no-sandbox');
+
 
 let mainWindow = null;
 
@@ -78,6 +84,41 @@ function deleteDecryptedFiles() {
  * Downloads, extracts, encrypts, and prepares the flipbook if not already cached.
  * Sends the flipbook-opened event and loads the flipbook page.
  */
+
+ipcMain.on('open-flipbook', async () => {
+  try {
+    const flipbookFolder = path.join(extractTo, getFlipbookFolderName(zipFileName));
+    if (!fs.existsSync(flipbookFolder)) {
+      console.log("downloading the zip");
+      const zipPath = path.join(extractZipTo, zipFileName);
+      if (!fs.existsSync(zipPath)) {
+        if (!fs.existsSync(extractZipTo)) {
+          fs.mkdirSync(extractZipTo, { recursive: true });
+        }
+        await downloadFile(s3ZipUrl, zipPath, (percent) => {
+          mainWindow.webContents.send('download-progress', { type: 'flipbook', percent });
+        });
+      }
+      console.log("Extracting the zip");
+      await unzipAndEncryptFlipbook(zipPath, extractTo, zipFileName);
+      fs.unlinkSync(zipPath);
+    } else {
+      console.log("flip book already extracted offline");
+    }
+    prepareDecryptedFlipbookCopy(extractTo, zipFileName, decryptedTemp);
+    const storyPath = path.join(decryptedTemp, 'index.html');
+    mainWindow.loadFile(path.join(__dirname, 'flip.html')).then(() => {
+      mainWindow.webContents.send('set-flipbook-path', `file://${storyPath.replace(/\\/g, '/')}`);
+      mainWindow.webContents.send('flipbook-opened', zipFileName);
+    });
+  } catch (err) {
+    console.error("Error in open-flipbook handler:", err.message);
+    mainWindow.loadURL('data:text/html,<h1>Error loading flipbook: ' + err.message + '</h1>');
+  }
+});
+
+
+/*
 ipcMain.on('open-flipbook', async () => {
   const flipbookFolder = path.join(extractTo, getFlipbookFolderName(zipFileName));
   if (!fs.existsSync(flipbookFolder)) {
@@ -115,6 +156,8 @@ ipcMain.on('open-flipbook', async () => {
   }
 });
 
+*/
+
 /**
  * Handle request to go back to the launcher (home) page.
  */
@@ -128,6 +171,33 @@ ipcMain.on('go-to-launcher', () => {
  * Handle request to download and cache the video.
  * Downloads and encrypts the video if not already cached, then loads the video page.
  */
+
+
+ipcMain.on('download-video', async () => {
+  const cacheVideoDir = extractTo;
+  const cacheVideoPath = path.join(cacheVideoDir, videoFileName + '.enc');
+  const tempVideoPath = path.join(os.tmpdir(), videoFileName);
+
+  if (!fs.existsSync(cacheVideoDir)) {
+    fs.mkdirSync(cacheVideoDir, { recursive: true });
+  }
+
+  try {
+    await downloadAndEncryptVideo(videoS3Url, cacheVideoPath, tempVideoPath, (percent) => {
+      mainWindow.webContents.send('download-progress', { type: 'video', percent });
+    });
+
+    mainWindow.loadFile(path.join(__dirname, 'video.html')).then(() => {
+      mainWindow.webContents.send('set-video-path', cacheVideoPath);
+      mainWindow.webContents.send('video-opened', videoFileName);
+    });
+  } catch (error) {
+    console.error("Error downloading video:", error.message);
+    mainWindow.webContents.send('download-failed', error.message);
+  }
+});
+
+/*
 ipcMain.on('download-video', async () => {
   const cacheVideoDir = extractTo;
   const cacheVideoPath = path.join(cacheVideoDir, videoFileName + '.enc');
@@ -140,12 +210,13 @@ ipcMain.on('download-video', async () => {
     mainWindow.webContents.send('download-progress', { type: 'video', percent });
   });
 
-
   mainWindow.loadFile(path.join(__dirname, 'video.html')).then(() => {
     mainWindow.webContents.send('set-video-path', cacheVideoPath);
     mainWindow.webContents.send('video-opened', videoFileName);
   });
+  
 });
+*/
 
 /**
  * Handle request from renderer to decrypt the video for playback.
@@ -153,4 +224,25 @@ ipcMain.on('download-video', async () => {
  */
 ipcMain.handle('decrypt-video', async (event, encPath) => {
   return await decryptVideo(encPath);
+});
+
+ipcMain.on('clear-cache', (event, type) => {
+  let targetDir = null;
+  if (type === 'flipbook') {
+    targetDir = extractTo; // flipbook_cache directory
+  } else if (type === 'video') {
+    // Assuming video is cached in flipbook_cache as well, or adjust path as needed
+    targetDir = path.join(app.getPath('userData'), 'flipbook_cache');
+    // If video is in a different directory, set it here
+  }
+  if (targetDir && fs.existsSync(targetDir)) {
+    deleteFolderRecursive(targetDir);
+    fs.mkdirSync(targetDir, { recursive: true }); // Recreate empty cache folder
+    if (mainWindow) {
+      // mainWindow.webContents.send('download-progress', { type, percent: 0 });
+    }
+  }
+  mainWindow.webContents.send('cache-cleared', type);
+
+  
 });
